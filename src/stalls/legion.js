@@ -104,6 +104,110 @@ export function setupLegionGaming(scene, interactionManager) {
     activeTargets.push(targetGroup);
   });
 
+  // 3D Lenovo Legion Pro 7i Gaming Laptop Showcase
+  const laptopGroup = new THREE.Group();
+  laptopGroup.name = "Legion_Pro_7i_Laptop";
+  laptopGroup.position.set(0, 1.15, 0.0);
+  laptopGroup.rotation.y = Math.PI * 0.5; // Face visitors approaching from main aisle
+
+  // Pedestal glowing RGB base ring
+  const ringGeo = new THREE.RingGeometry(0.35, 0.45, 32);
+  const ringMat = new THREE.MeshBasicMaterial({ color: 0xff2a6d, side: THREE.DoubleSide, transparent: true, opacity: 0.7 });
+  const ring = new THREE.Mesh(ringGeo, ringMat);
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.y = 0.002;
+  laptopGroup.add(ring);
+
+  // Laptop Base Chassis (Onyx Grey Metal)
+  const baseMat = new THREE.MeshStandardMaterial({ color: 0x181a20, metalness: 0.85, roughness: 0.2 });
+  const baseMesh = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.022, 0.36), baseMat);
+  laptopGroup.add(baseMesh);
+
+  // RGB Backlit Keyboard Plate
+  const kbCanvas = document.createElement('canvas');
+  kbCanvas.width = 512;
+  kbCanvas.height = 256;
+  const kctx = kbCanvas.getContext('2d');
+  kctx.fillStyle = '#101216';
+  kctx.fillRect(0, 0, 512, 256);
+  // RGB keyboard grid
+  const grad = kctx.createLinearGradient(0, 0, 512, 0);
+  grad.addColorStop(0, '#ff2a6d');
+  grad.addColorStop(0.5, '#00d2ff');
+  grad.addColorStop(1, '#00ff96');
+  kctx.strokeStyle = grad;
+  kctx.lineWidth = 3;
+  for (let r = 0; r < 5; r++) {
+    for (let c = 0; c < 14; c++) {
+      kctx.strokeRect(30 + c * 32, 25 + r * 30, 24, 20);
+    }
+  }
+  // Trackpad
+  kctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+  kctx.strokeRect(180, 185, 150, 60);
+
+  const kbTex = new THREE.CanvasTexture(kbCanvas);
+  const kbMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.46, 0.28),
+    new THREE.MeshStandardMaterial({ map: kbTex, emissive: 0x221133, emissiveIntensity: 0.5 })
+  );
+  kbMesh.rotation.x = -Math.PI / 2;
+  kbMesh.position.set(0, 0.012, 0.02);
+  laptopGroup.add(kbMesh);
+
+  // Laptop Lid Assembly (105° tilt)
+  const lidGroup = new THREE.Group();
+  lidGroup.position.set(0, 0.011, -0.17);
+  lidGroup.rotation.x = -Math.PI * 0.58; // 105 degrees open
+
+  // Screen frame
+  const lidMesh = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.35, 0.012), baseMat);
+  lidMesh.position.set(0, 0.175, 0);
+  lidGroup.add(lidMesh);
+
+  // PureSight OLED Screen Display
+  const screenCanvas = document.createElement('canvas');
+  screenCanvas.width = 1024;
+  screenCanvas.height = 640;
+  const sctx = screenCanvas.getContext('2d');
+  sctx.fillStyle = '#080c14';
+  sctx.fillRect(0, 0, 1024, 640);
+  // Cyberpunk Gaming Visual
+  const sgrad = sctx.createRadialGradient(512, 320, 50, 512, 320, 500);
+  sgrad.addColorStop(0, '#ff2a6d');
+  sgrad.addColorStop(0.7, '#1b0a2a');
+  sgrad.addColorStop(1, '#05070e');
+  sctx.fillStyle = sgrad;
+  sctx.fillRect(20, 20, 984, 600);
+
+  sctx.fillStyle = '#ffffff';
+  sctx.font = 'bold 54px Arial';
+  sctx.textAlign = 'center';
+  sctx.fillText('LEGION PRO 7i', 512, 220);
+
+  sctx.fillStyle = '#00d2ff';
+  sctx.font = 'bold 36px Arial';
+  sctx.fillText('240Hz PureSight Gaming Display', 512, 300);
+
+  sctx.fillStyle = '#00ff96';
+  sctx.font = 'bold 30px Arial';
+  sctx.fillText('NVIDIA GeForce RTX 4090 • Intel Core i9-14900HX', 512, 370);
+
+  sctx.fillStyle = '#ffb300';
+  sctx.font = 'italic 26px Arial';
+  sctx.fillText('Walk closer to check Minecraft / Roblox / Terraria compatibility!', 512, 450);
+
+  const screenTex = new THREE.CanvasTexture(screenCanvas);
+  const screenMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.50, 0.33),
+    new THREE.MeshBasicMaterial({ map: screenTex, side: THREE.DoubleSide })
+  );
+  screenMesh.position.set(0, 0.175, 0.007);
+  lidGroup.add(screenMesh);
+
+  laptopGroup.add(lidGroup);
+  legionGroup.add(laptopGroup);
+
   scene.add(legionGroup);
 
   return {

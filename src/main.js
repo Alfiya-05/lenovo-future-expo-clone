@@ -22,6 +22,8 @@ import { setupAdaptiveComputing } from './stalls/adaptive.js';
 import { setupPersonalAI } from './stalls/personal-ai.js';
 import { setupLenovoXR } from './stalls/xr.js';
 import { setupFutureLab } from './stalls/future-lab.js';
+import { GamingAdvisorManager } from './gaming-advisor.js';
+import { setupExpoAtmosphere } from './expo-atmosphere.js';
 
 // Unregister any legacy Service Workers to prevent stale client caching on Meta Quest Browser
 if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
@@ -52,9 +54,10 @@ class LenovoExpoApp {
   }
 
   async init() {
-    // 1. Scene & Camera Setup
+    // 1. Scene & Camera Setup (Deep dark cyber expo atmosphere so colorful neon lights pop)
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x0a0c10);
+    this.scene.background = new THREE.Color(0x060810);
+    this.scene.fog = new THREE.FogExp2(0x060810, 0.012);
 
     this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 200);
     this.camera.position.set(0, 1.70, 21.0);
@@ -70,7 +73,7 @@ class LenovoExpoApp {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.0));
     this.renderer.xr.enabled = true;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.1;
+    this.renderer.toneMappingExposure = 1.15;
     this.container.appendChild(this.renderer.domElement);
 
     // 3. Exhibition Lighting
@@ -88,6 +91,7 @@ class LenovoExpoApp {
     });
     this.vrMenu = new VRMenu(this.scene, this.camera, this.interactionManager, this.locomotionManager);
     this.grabInteractionManager = new GrabInteractionManager(this.scene, this.camera, this.handUIManager);
+    this.gamingAdvisor = new GamingAdvisorManager(this.scene, this.camera, this.interactionManager);
 
     // 5. Initialize Subsystems & Guidance
     guidanceSystem.init(this.scene);
@@ -130,15 +134,18 @@ class LenovoExpoApp {
   }
 
   setupLighting() {
-    const ambLight = new THREE.AmbientLight(0xffffff, 0.85);
+    // Deep dark expo ambient base tone for maximum contrast
+    const ambLight = new THREE.AmbientLight(0x0c1220, 0.22);
     this.scene.add(ambLight);
 
-    const dirLight = new THREE.DirectionalLight(0xddeeff, 1.2);
+    // Subtle cool rim directional light
+    const dirLight = new THREE.DirectionalLight(0x405575, 0.38);
     dirLight.position.set(0, 15, -5);
     this.scene.add(dirLight);
 
-    const aisleLight = new THREE.PointLight(0x00d2ff, 1.5, 35);
-    aisleLight.position.set(0, 4.0, 0);
+    // Main central aisle cyan glow
+    const aisleLight = new THREE.PointLight(0x00d2ff, 1.8, 30, 2.0);
+    aisleLight.position.set(0, 3.8, 0);
     this.scene.add(aisleLight);
   }
 
@@ -162,7 +169,14 @@ class LenovoExpoApp {
             child.castShadow = false;
             child.receiveShadow = false;
             if (child.material) {
-              child.material.roughness = Math.max(child.material.roughness || 0.3, 0.2);
+              // Dark glossy showroom floor reflecting the neon lighting structures
+              const isFloor = child.name.toLowerCase().includes('floor') || child.position.y <= 0.05;
+              if (isFloor) {
+                child.material.roughness = 0.18;
+                child.material.metalness = 0.35;
+              } else {
+                child.material.roughness = Math.max(child.material.roughness || 0.3, 0.25);
+              }
             }
           }
         });
@@ -175,6 +189,12 @@ class LenovoExpoApp {
         this.stallUpdaters.push(setupPersonalAI(this.scene, this.interactionManager));
         this.stallUpdaters.push(setupLenovoXR(this.scene, this.interactionManager));
         this.stallUpdaters.push(setupFutureLab(this.scene, this.interactionManager));
+
+        // Initialize Atmospheric Lighting Structures (Chevron Arch, Canopies, Totem) & Realistic Attendees
+        const atmosphere = setupExpoAtmosphere(this.scene);
+        if (atmosphere) {
+          this.stallUpdaters.push(atmosphere);
+        }
 
         statusText.textContent = "READY // LENOVO FUTURE EXPO LOADED";
         progressFill.style.width = "100%";
@@ -229,6 +249,9 @@ class LenovoExpoApp {
     this.locomotionManager.update(delta);
 
     guidanceSystem.update(time);
+    if (this.gamingAdvisor) {
+      this.gamingAdvisor.update(delta, time);
+    }
     this.stallUpdaters.forEach((stall) => {
       if (stall && stall.update) {
         stall.update(time);
