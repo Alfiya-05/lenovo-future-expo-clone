@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Lenovo Future Expo // Standalone WebXR VR Experience</title>
+  <meta name="description" content="Experience the Lenovo Future Expo in immersive 3D WebXR VR on Meta Quest 3S or Desktop browser." />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <!-- 3D WebGL / WebXR Canvas Container -->
+  <div id="canvas-container"></div>
+
+  <!-- 2D Landing Screen & HUD Overlay -->
+  <div id="landing-screen">
+    <div class="landing-backdrop"></div>
+    <div class="landing-content">
+      <!-- Lenovo Header Branding -->
+      <div class="brand-header">
+        <div class="lenovo-badge">Lenovo</div>
+        <div class="expo-tag">FUTURE EXPO 2026 // BUILD HAND-UI-003</div>
+      </div>
+
+      <h1 class="main-title">LENOVO FUTURE EXPO</h1>
+      <p class="sub-title">TECHNOLOGY • INNOVATION • THE FUTURE</p>
+
+      <p class="description">
+        Step inside a realistic 3D exhibition hall. Explore six interactive technology zones featuring Legion Gaming, AI PC, Adaptive Computing, Personal AI, Lenovo XR, and the grand Future Lab.
+      </p>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <button id="btn-enter-vr" class="btn btn-primary">
+          <span class="btn-icon">🥽</span>
+          <span class="btn-text">ENTER VR (QUEST 3S)</span>
+        </button>
+
+        <button id="btn-desktop-preview" class="btn btn-secondary">
+          <span class="btn-icon">🖥️</span>
+          <span class="btn-text">DESKTOP PREVIEW</span>
+        </button>
+      </div>
+
+      <!-- WebXR Diagnostics Panel -->
+      <div id="diag-panel" class="diag-panel">
+        <div class="diag-title">LENOVO FUTURE EXPO — WebXR Diagnostics [Build: HAND-UI-003]</div>
+        <div class="diag-grid">
+          <div class="diag-item">HTTPS: <span id="diag-https" class="diag-val">Checking...</span></div>
+          <div class="diag-item">Secure Context: <span id="diag-secure" class="diag-val">Checking...</span></div>
+          <div class="diag-item">navigator.xr: <span id="diag-xr" class="diag-val">Checking...</span></div>
+          <div class="diag-item">immersive-vr: <span id="diag-session" class="diag-val">Checking...</span></div>
+          <div class="diag-item">Hand Tracking: <span id="diag-hand" class="diag-val pass">DUAL QUEST / PC MODE</span></div>
+          <div class="diag-item">Protocol: <span id="diag-protocol" class="diag-val">Checking...</span></div>
+          <div class="diag-item">Host: <span id="diag-host" class="diag-val">Checking...</span></div>
+          <div class="diag-item">Locomotion: <span id="diag-locomotion" class="diag-val pass">SMOOTH JOYSTICK</span></div>
+        </div>
+        <div class="diag-detail">
+          <strong>Browser:</strong> <span id="diag-ua">Detecting...</span>
+        </div>
+        <div class="diag-detail">
+          <strong>VR Status:</strong> <span id="diag-status" class="diag-val">Initializing...</span>
+        </div>
+      </div>
+
+      <!-- Control Guides -->
+      <div class="controls-guide">
+        <div class="guide-column">
+          <h4>🖐️ Hand Tracking Palm Menu (Quest 3S)</h4>
+          <ul>
+            <li><strong>Raise Left Palm (Facing You):</strong> Holographic Palm Menu Appears</li>
+            <li><strong>Index Finger Point / Hover:</strong> Highlights options & buttons</li>
+            <li><strong>Thumb + Index Pinch:</strong> Selects hovered option (Map, Progress, AI Guide, Settings, Close)</li>
+            <li><strong>Lower / Turn Palm Away:</strong> Holographic UI smoothly disappears</li>
+          </ul>
+          <h4 style="margin-top: 10px;">🥽 Quest Controller Fallback</h4>
+          <ul>
+            <li><strong>Left Joystick (Fwd/Back/Strafe):</strong> Smooth Walking & Strafing</li>
+            <li><strong>Right Joystick (Left/Right):</strong> 45° Snap Turning</li>
+            <li><strong>Trigger / Ray:</strong> Point & Select Booth Interactions</li>
+          </ul>
+        </div>
+        <div class="guide-column">
+          <h4>🖥️ Desktop Controls & PC Hand UI Testing</h4>
+          <ul>
+            <li><strong>[H]:</strong> Toggle Simulated 3D Hand Visibility</li>
+            <li><strong>[M]:</strong> Toggle Palm Menu (Simulate Palm Raise)</li>
+            <li><strong>Mouse Hover:</strong> Point & Highlight Menu Buttons</li>
+            <li><strong>[P] or [Left Click]:</strong> Simulate Thumb-Index Pinch / Select</li>
+            <li><strong>W / A / S / D:</strong> Walk in 3D Expo Hall</li>
+            <li><strong>ESC:</strong> Close Menu / Release Cursor</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Loading Bar -->
+      <div id="loading-container" class="loading-container">
+        <div class="loading-status-text" id="loading-status-text">INITIALIZING LENOVO FUTURE EXPO...</div>
+        <div class="progress-bar-bg">
+          <div id="progress-bar-fill" class="progress-bar-fill"></div>
+        </div>
+        <div class="loading-percentage" id="loading-percentage">0%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- In-Game Desktop HUD Subtitles & Notifications -->
+  <div id="desktop-hud" class="desktop-hud hidden">
+    <div id="hud-notification" class="hud-notification">
+      <div class="hud-tag">LENOVO GUIDE</div>
+      <div id="hud-text" class="hud-text">Welcome to Lenovo Future Expo. Step through the entrance arch to begin.</div>
+    </div>
+    
+    <div class="desktop-controls-hint">
+      <span>WASD: Move</span> • <span>Mouse: Look</span> • <span>Click: Interact</span> • <span>ESC: Menu</span>
+    </div>
+  </div>
+
+  <!-- Main JavaScript Application Entry -->
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
