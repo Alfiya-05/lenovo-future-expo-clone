@@ -23,6 +23,7 @@ import { setupPersonalAI } from './stalls/personal-ai.js';
 import { setupLenovoXR } from './stalls/xr.js';
 import { setupFutureLab } from './stalls/future-lab.js';
 import { GamingAdvisorManager } from './gaming-advisor.js';
+import { TaskAdvisorManager } from './task-advisor.js';
 import { setupExpoAtmosphere } from './expo-atmosphere.js';
 
 // Unregister any legacy Service Workers to prevent stale client caching on Meta Quest Browser
@@ -54,10 +55,10 @@ class LenovoExpoApp {
   }
 
   async init() {
-    // 1. Scene & Camera Setup (Deep dark cyber expo atmosphere so colorful neon lights pop)
+    // 1. Scene & Camera Setup (Slightly dimmed exhibition ambience so colorful neon lights pop vibrantly)
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x060810);
-    this.scene.fog = new THREE.FogExp2(0x060810, 0.012);
+    this.scene.background = new THREE.Color(0x10131d);
+    this.scene.fog = new THREE.Fog(0x10131d, 40, 105);
 
     this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 200);
     this.camera.position.set(0, 1.70, 21.0);
@@ -92,6 +93,7 @@ class LenovoExpoApp {
     this.vrMenu = new VRMenu(this.scene, this.camera, this.interactionManager, this.locomotionManager);
     this.grabInteractionManager = new GrabInteractionManager(this.scene, this.camera, this.handUIManager);
     this.gamingAdvisor = new GamingAdvisorManager(this.scene, this.camera, this.interactionManager);
+    this.taskAdvisor = new TaskAdvisorManager(this.scene, this.camera, this.interactionManager);
 
     // 5. Initialize Subsystems & Guidance
     guidanceSystem.init(this.scene);
@@ -134,18 +136,18 @@ class LenovoExpoApp {
   }
 
   setupLighting() {
-    // Deep dark expo ambient base tone for maximum contrast
-    const ambLight = new THREE.AmbientLight(0x0c1220, 0.22);
+    // Soft showroom ambient tone: a bit darker than default, allowing colorful neon lights to pop with high contrast
+    const ambLight = new THREE.AmbientLight(0xffffff, 0.68);
     this.scene.add(ambLight);
 
-    // Subtle cool rim directional light
-    const dirLight = new THREE.DirectionalLight(0x405575, 0.38);
-    dirLight.position.set(0, 15, -5);
+    // Clean directional light providing crisp specular highlights on laptops, booths, and attendees
+    const dirLight = new THREE.DirectionalLight(0xf0f5ff, 0.95);
+    dirLight.position.set(0, 16, -4);
     this.scene.add(dirLight);
 
-    // Main central aisle cyan glow
-    const aisleLight = new THREE.PointLight(0x00d2ff, 1.8, 30, 2.0);
-    aisleLight.position.set(0, 3.8, 0);
+    // Central aisle cyan glow highlighting the main walkway
+    const aisleLight = new THREE.PointLight(0x00d2ff, 1.8, 35, 1.6);
+    aisleLight.position.set(0, 4.0, 0);
     this.scene.add(aisleLight);
   }
 
@@ -251,6 +253,9 @@ class LenovoExpoApp {
     guidanceSystem.update(time);
     if (this.gamingAdvisor) {
       this.gamingAdvisor.update(delta, time);
+    }
+    if (this.taskAdvisor) {
+      this.taskAdvisor.update(delta, time);
     }
     this.stallUpdaters.forEach((stall) => {
       if (stall && stall.update) {

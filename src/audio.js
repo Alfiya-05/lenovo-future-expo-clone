@@ -77,7 +77,7 @@ class SoundManager {
 
   /**
    * Background convention crowd chatter
-   * Seamlessly loops authentic room murmur & conversational chatter
+   * Seamlessly loops authentic room murmur & conversational chatter at gentle volume
    */
   startCrowdChatter() {
     if (this.crowdAudio) return;
@@ -85,7 +85,7 @@ class SoundManager {
     try {
       this.crowdAudio = new Audio('./assets/audio/expo_crowd_chatter.ogg');
       this.crowdAudio.loop = true;
-      this.crowdAudio.volume = 0.16; // Comfortable ambient level
+      this.crowdAudio.volume = 0.08; // Gentle, pleasant ambient room chatter
       this.crowdAudio.muted = this.isMuted;
 
       const playPromise = this.crowdAudio.play();
@@ -94,6 +94,7 @@ class SoundManager {
           // Fallback to MP3 or retry on user gesture
           if (this.crowdAudio) {
             this.crowdAudio.src = './assets/audio/expo_crowd_chatter.mp3';
+            this.crowdAudio.volume = 0.08;
             this.crowdAudio.play().catch(() => {});
           }
         });
@@ -107,6 +108,18 @@ class SoundManager {
     if (this.crowdAudio) {
       this.crowdAudio.pause();
       this.crowdAudio = null;
+    }
+  }
+
+  duckCrowdChatter() {
+    if (this.crowdAudio) {
+      this.crowdAudio.volume = 0.02;
+    }
+  }
+
+  restoreCrowdChatter() {
+    if (this.crowdAudio) {
+      this.crowdAudio.volume = 0.07;
     }
   }
 
@@ -251,8 +264,8 @@ class SoundManager {
 
   /**
    * Minecraft Villager Voice & Sound Effect
-   * Directly uses the YouTube link audio: https://www.youtube.com/watch?v=fiwRZ_j61Dc
-   * Calls onComplete callback when finished to continue with dialogue smoothly!
+   * Directly plays the authentic sound from the YouTube video: https://www.youtube.com/watch?v=fiwRZ_j61Dc
+   * Boosted volume for crystal clarity; continues with dialogue seamlessly.
    */
   playVillagerHmm(onComplete = null) {
     if (this.isMuted) {
@@ -270,80 +283,57 @@ class SoundManager {
     };
 
     try {
-      const audio = new Audio('./assets/audio/villager_idle.ogg');
-      audio.volume = 0.95;
-      audio.onended = triggerComplete;
+      // Prioritize the direct YouTube audio rip or original OGG
+      const audioSources = [
+        './assets/audio/villager_youtube.mp3',
+        './assets/audio/villager_idle.ogg',
+        './assets/audio/villager_idle.mp3'
+      ];
 
-      const p = audio.play();
-      if (p !== undefined) {
-        p.then(() => {
-          // Complete after short intro sound
-          setTimeout(triggerComplete, 1400);
-        }).catch(() => {
-          // Try MP3 fallback
-          const mp3Audio = new Audio('./assets/audio/villager_idle.mp3');
-          mp3Audio.volume = 0.95;
-          mp3Audio.onended = triggerComplete;
-          mp3Audio.play().then(() => {
+      let attemptIdx = 0;
+      const tryNextSource = () => {
+        if (attemptIdx >= audioSources.length) {
+          triggerComplete();
+          return;
+        }
+
+        const src = audioSources[attemptIdx++];
+        const audio = new Audio(src);
+        audio.volume = 1.0; // Boosted to full volume
+
+        // Attempt Web Audio gain boosting if context is active
+        try {
+          if (this.ctx && this.masterGain && !audio._boosted) {
+            const track = this.ctx.createMediaElementSource(audio);
+            const boostGain = this.ctx.createGain();
+            boostGain.gain.setValueAtTime(1.5, this.ctx.currentTime); // 1.5x volume boost
+            track.connect(boostGain);
+            boostGain.connect(this.masterGain);
+            audio._boosted = true;
+          }
+        } catch (e) {
+          // Fallback to standard audio element volume
+        }
+
+        audio.onended = triggerComplete;
+
+        const p = audio.play();
+        if (p !== undefined) {
+          p.then(() => {
+            // Auto complete after sound duration
             setTimeout(triggerComplete, 1400);
           }).catch(() => {
-            this.synthVillagerHmm();
-            setTimeout(triggerComplete, 550);
+            tryNextSource();
           });
-        });
-      } else {
-        setTimeout(triggerComplete, 1200);
-      }
+        } else {
+          setTimeout(triggerComplete, 1400);
+        }
+      };
+
+      tryNextSource();
     } catch (e) {
-      this.synthVillagerHmm();
-      setTimeout(triggerComplete, 550);
+      triggerComplete();
     }
-  }
-
-  synthVillagerHmm() {
-    if (!this.ctx || this.isMuted) return;
-    const now = this.ctx.currentTime;
-    const masterOut = this.masterGain;
-
-    // Authentic Minecraft Villager "Hrrm" Formant Synthesis
-    const baseFreq = 210;
-    const osc1 = this.ctx.createOscillator();
-    const osc2 = this.ctx.createOscillator();
-    const osc3 = this.ctx.createOscillator();
-
-    osc1.type = 'sawtooth';
-    osc2.type = 'sawtooth';
-    osc3.type = 'square';
-
-    osc1.frequency.setValueAtTime(baseFreq, now);
-    osc1.frequency.setValueAtTime(baseFreq, now + 0.04);
-    osc1.frequency.exponentialRampToValueAtTime(135, now + 0.42);
-
-    osc2.frequency.setValueAtTime(baseFreq * 2, now);
-    osc2.frequency.exponentialRampToValueAtTime(135 * 2, now + 0.42);
-
-    osc3.frequency.setValueAtTime(baseFreq * 3, now);
-    osc3.frequency.exponentialRampToValueAtTime(135 * 3, now + 0.42);
-
-    const filt1 = this.ctx.createBiquadFilter();
-    filt1.type = 'bandpass';
-    filt1.frequency.setValueAtTime(520, now);
-    filt1.frequency.linearRampToValueAtTime(420, now + 0.42);
-    filt1.Q.setValueAtTime(5, now);
-
-    const envGain = this.ctx.createGain();
-    envGain.gain.setValueAtTime(0.0001, now);
-    envGain.gain.linearRampToValueAtTime(0.35, now + 0.02);
-    envGain.gain.setValueAtTime(0.35, now + 0.22);
-    envGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.46);
-
-    osc1.connect(filt1);
-    osc2.connect(filt1);
-    osc3.connect(filt1);
-    filt1.connect(envGain);
-    envGain.connect(masterOut);
-
-    [osc1, osc2, osc3].forEach(o => { o.start(now); o.stop(now + 0.5); });
   }
 
   /**

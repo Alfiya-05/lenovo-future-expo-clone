@@ -45,8 +45,8 @@ export const LAPTOP_PROFILES = [
       minecraft: {
         fps: '320+ FPS',
         rating: 'ULTRA SUPREME',
-        quote: "Hrrrrmm! *Adjusts trade* Yes, this Legion Pro 7i runs Minecraft beyond perfection! With its Intel Core i9-14900HX and monster RTX 4090, you can push 32-chunk render distance with BSL Ultra Shaders at over 320 FPS! The 240Hz PureSight display makes every diamond block radiant! A trade worth 64 emeralds! Hrrrrm!",
-        ttsText: "Hrrrrmm! Yes, it can run Minecraft beyond perfection! It has the Intel Core i9 14900HX processor, RTX 4090 graphics, and PureSight 240 Hertz display. You can run ultra shaders at over 300 FPS! Villager approved! Hrrrrm!"
+        quote: "*Adjusts emerald trade* Yes, this Legion Pro 7i runs Minecraft beyond perfection! With its Intel Core i9-14900HX and monster RTX 4090, you can push 32-chunk render distance with BSL Ultra Shaders at over 320 FPS! The 240Hz PureSight display makes every diamond block radiant! A trade worth 64 emeralds! Villager approved!",
+        ttsText: "Yes, it can run Minecraft beyond perfection! It has the Intel Core i9 14900HX processor, RTX 4090 graphics, and PureSight 240 Hertz display. You can run ultra shaders at over 300 FPS! Villager approved!"
       },
       roblox: {
         fps: '240 FPS (Locked)',
@@ -84,8 +84,8 @@ export const LAPTOP_PROFILES = [
       minecraft: {
         fps: '120+ FPS',
         rating: 'EXCELLENT',
-        quote: "Hrrrrmm! Yes! The AI PC handles Minecraft effortlessly! The high-efficiency neural processor and GPU deliver a solid 120 FPS on high render distance! And look at that PureSight 2.8K OLED screen—deep caves have true zero blacks, and glowstone glows with HDR brilliance! Truly civilized! Hrrrrm!",
-        ttsText: "Hrrrrmm! Yes, it can run Minecraft beautifully! It has the Intel Core Ultra 7 AI processor and PureSight 2.8K OLED 120 Hertz display, running at over 120 frames per second with vibrant HDR colors! Hrrrrm!"
+        quote: "*Inspects workstation* Yes! The AI PC handles Minecraft effortlessly! The high-efficiency neural processor and GPU deliver a solid 120 FPS on high render distance! And look at that PureSight 2.8K OLED screen—deep caves have true zero blacks, and glowstone glows with HDR brilliance! Truly civilized!",
+        ttsText: "Yes, it can run Minecraft beautifully! It has the Intel Core Ultra 7 AI processor and PureSight 2.8K OLED 120 Hertz display, running at over 120 frames per second with vibrant HDR colors!"
       },
       roblox: {
         fps: '120 FPS',
@@ -123,8 +123,8 @@ export const LAPTOP_PROFILES = [
       minecraft: {
         fps: '90+ FPS',
         rating: 'DUAL SCREEN PRO',
-        quote: "Hrrrrmm! Dual screens for Minecraft?! Astonishing! You can have Minecraft running on the top OLED display at 90 FPS, while keeping your crafting recipes, wiki, and Nether coordinate map on the bottom touch screen! The Core Ultra 7 makes multi-tasking smoother than polished andesite! Hrrrrm!",
-        ttsText: "Hrrrrmm! Dual screens for Minecraft! Yes, it runs at over 90 frames per second on the top PureSight OLED, while you keep crafting recipes on the bottom screen! Hrrrrm!"
+        quote: "*Gestures excitedly* Dual screens for Minecraft?! Astonishing! You can have Minecraft running on the top OLED display at 90 FPS, while keeping your crafting recipes, wiki, and Nether coordinate map on the bottom touch screen! The Core Ultra 7 makes multi-tasking smoother than polished andesite!",
+        ttsText: "Dual screens for Minecraft! Yes, it runs at over 90 frames per second on the top PureSight OLED, while you keep crafting recipes on the bottom screen!"
       },
       roblox: {
         fps: '90 FPS',
@@ -162,8 +162,8 @@ export const LAPTOP_PROFILES = [
       minecraft: {
         fps: '110+ FPS',
         rating: 'OBSIDIAN TOUGH',
-        quote: "Hrrrrmm! The legendary ThinkPad! Tough as obsidian and light as a feather! With the Core Ultra 7 and Intel Arc, you get over 110 FPS on Minecraft with Fabric optimization mods. You can game anywhere with unbreakable durability! Hrrrrm!",
-        ttsText: "Hrrrrmm! The legendary ThinkPad! Yes, it runs Minecraft at over 110 frames per second on its 2.8K OLED display, with military-grade carbon fiber toughness! Hrrrrm!"
+        quote: "*Nods with deep respect* The legendary ThinkPad! Tough as obsidian and light as a feather! With the Core Ultra 7 and Intel Arc, you get over 110 FPS on Minecraft with Fabric optimization mods. You can game anywhere with unbreakable durability!",
+        ttsText: "The legendary ThinkPad! Yes, it runs Minecraft at over 110 frames per second on its 2.8K OLED display, with military-grade carbon fiber toughness!"
       },
       roblox: {
         fps: '100+ FPS',
@@ -1442,6 +1442,9 @@ export class GamingAdvisorManager {
       }
     };
 
+    // Duck background convention chatter so dialogue is completely clear
+    soundManager.duckCrowdChatter();
+
     // 1. Play Authentic Retro Sound First, then smoothly continue with dialogue!
     if (game.id === 'minecraft') {
       // Real YouTube Villager Sound (from https://www.youtube.com/watch?v=fiwRZ_j61Dc)
@@ -1465,6 +1468,9 @@ export class GamingAdvisorManager {
   // 9. DISMISS / CLEANUP CHARACTER
   // ==========================================
   dismissActiveCharacter() {
+    // Restore background convention chatter
+    soundManager.restoreCrowdChatter();
+
     if (this.speechBubbleMesh && this.activeCharacter) {
       this.interactionManager.unregisterInteractable(this.speechBubbleMesh);
       this.activeCharacter.model.group.remove(this.speechBubbleMesh);
@@ -1520,7 +1526,14 @@ export class GamingAdvisorManager {
       this.targetCardScale = 1.0;
       this.cardMesh.visible = true;
 
-      const targetCardPos = nearestLaptop.position.clone().add(nearestLaptop.cardOffset);
+      // Position gaming card on the LEFT side of the laptop from approaching player perspective
+      const centerCardPos = nearestLaptop.position.clone().add(nearestLaptop.cardOffset);
+      const toPlayer = playerWorldPos.clone().sub(centerCardPos);
+      toPlayer.y = 0;
+      toPlayer.normalize();
+      const rightVector = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), toPlayer).normalize();
+
+      const targetCardPos = centerCardPos.clone().addScaledVector(rightVector, -0.92);
       this.cardMesh.position.copy(targetCardPos);
       this.cardMesh.lookAt(playerWorldPos.x, targetCardPos.y, playerWorldPos.z);
     } else {
