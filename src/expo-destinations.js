@@ -25,9 +25,9 @@ export const EXPO_DESTINATIONS = [
     description: 'Holographic Virtual Guide & Tour Initiation Portal',
     themeColor: 0xe2231a, // Lenovo Red
     accentColor: 0x00d2ff,
-    boothCenter: new THREE.Vector3(0.0, 0.0, 20.5),
-    landingPosition: new THREE.Vector3(0.0, 0.0, 21.0),
-    landingRotationY: 0.0, // Face -Z (down central aisle)
+    boothCenter: new THREE.Vector3(0.0, 0.0, 24.0),
+    landingPosition: new THREE.Vector3(0.0, 0.0, 27.5),
+    landingRotationY: 0.0, // Face -Z (down central aisle through archway)
     iconType: 'entrance',
     badgeText: 'START TOUR'
   },

@@ -14,7 +14,7 @@ import { soundManager } from './audio.js';
 import { VRMenu } from './ui/vr-menu.js';
 import { HandUIManager } from './hand-ui.js';
 import { GrabInteractionManager } from './grab-interaction.js';
-
+import { setupGrandEntranceZone } from './entrance-zone.js';
 import { setupEntranceExperience } from './stalls/entrance.js';
 import { setupLegionGaming } from './stalls/legion.js';
 import { setupLenovoAIPC } from './stalls/ai-pc.js';
@@ -25,6 +25,7 @@ import { setupFutureLab } from './stalls/future-lab.js';
 import { GamingAdvisorManager } from './gaming-advisor.js';
 import { TaskAdvisorManager } from './task-advisor.js';
 import { setupExpoAtmosphere } from './expo-atmosphere.js';
+import { setupGuideRobot } from './guide-robot.js';
 
 // Unregister any legacy Service Workers to prevent stale client caching on Meta Quest Browser
 if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
@@ -61,7 +62,7 @@ class LenovoExpoApp {
     this.scene.fog = new THREE.Fog(0x10131d, 40, 105);
 
     this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 200);
-    this.camera.position.set(0, 1.70, 21.0);
+    this.camera.position.set(0, 1.70, 27.5);
 
     this.userGroup = new THREE.Group();
     this.userGroup.position.set(0, 0, 0);
@@ -80,6 +81,13 @@ class LenovoExpoApp {
     // 3. Exhibition Lighting
     this.setupLighting();
 
+    // 3b. Grand Entrance Zone (Illuminated Archway, Reflective Path, Light Beams)
+    // Instantiated immediately so it is guaranteed present from frame 0
+    const grandEntrance = setupGrandEntranceZone(this.scene);
+    if (grandEntrance) {
+      this.stallUpdaters.push(grandEntrance);
+    }
+
     // 4. Managers & Core Systems
     this.interactionManager = new InteractionManager(this.scene, this.camera, this.renderer);
     this.locomotionManager = new LocomotionManager(this.scene, this.camera, this.renderer, this.userGroup);
@@ -94,6 +102,7 @@ class LenovoExpoApp {
     this.grabInteractionManager = new GrabInteractionManager(this.scene, this.camera, this.handUIManager);
     this.gamingAdvisor = new GamingAdvisorManager(this.scene, this.camera, this.interactionManager);
     this.taskAdvisor = new TaskAdvisorManager(this.scene, this.camera, this.interactionManager);
+    this.guideRobot = setupGuideRobot(this.scene, this.camera, this.interactionManager);
 
     // 5. Initialize Subsystems & Guidance
     guidanceSystem.init(this.scene);
@@ -106,7 +115,13 @@ class LenovoExpoApp {
       enterVRBtn.addEventListener('click', (e) => {
         e.preventDefault();
         soundManager.init();
+        this.userGroup.position.set(0, 0, 27.5);
+        this.userGroup.rotation.set(0, 0, 0);
         this.vrManager.startVRSession();
+        console.log('%c[Lenovo Expo] Player entered VR at: X=0.00, Y=1.70, Z=27.50 (Facing Entrance Archway 7.0m away at Z=20.50)', 'color: #00ff96; font-weight: bold; font-size: 13px;');
+        if (this.guideRobot) {
+          this.guideRobot.triggerGreeting();
+        }
       });
     }
 
@@ -117,7 +132,13 @@ class LenovoExpoApp {
         soundManager.init();
         document.getElementById('landing-screen').classList.add('hidden');
         document.getElementById('desktop-hud').classList.remove('hidden');
+        this.camera.position.set(0, 1.70, 27.5);
+        this.camera.rotation.set(0, 0, 0);
         this.locomotionManager.desktopControls.lock();
+        console.log('%c[Lenovo Expo] Player spawned at: X=0.00, Y=1.70, Z=27.50 (Facing Entrance Archway 7.0m away at Z=20.50)', 'color: #00ff96; font-weight: bold; font-size: 13px;');
+        if (this.guideRobot) {
+          this.guideRobot.triggerGreeting();
+        }
       });
     }
 
@@ -167,6 +188,10 @@ class LenovoExpoApp {
         this.scene.add(model);
 
         model.traverse((child) => {
+          // Hide old GLB entrance archway mesh so our grand illuminated archway shines unobstructed
+          if (child.name === 'Entrance_Archway') {
+            child.visible = false;
+          }
           if (child.isMesh) {
             child.castShadow = false;
             child.receiveShadow = false;
@@ -257,9 +282,12 @@ class LenovoExpoApp {
     if (this.taskAdvisor) {
       this.taskAdvisor.update(delta, time);
     }
+    if (this.guideRobot) {
+      this.guideRobot.update(time, delta);
+    }
     this.stallUpdaters.forEach((stall) => {
       if (stall && stall.update) {
-        stall.update(time);
+        stall.update(time, delta);
       }
     });
 
