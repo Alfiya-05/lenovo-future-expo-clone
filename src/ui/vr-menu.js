@@ -64,8 +64,8 @@ export class VRMenu {
 
     // 2. Restart from Entrance Button
     const restartBtn = this.interactionManager.createWorldButton("TELEPORT TO ENTRANCE", 1.2, 0.22, () => {
-      this.locomotionManager.teleportTo(0, 21.0);
-      guidanceSystem.showGuidance("Teleported to Entrance.");
+      this.locomotionManager.teleportTo(0, 27.5);
+      guidanceSystem.showGuidance("Teleported to Grand Entrance.");
       this.toggle();
     }, "#ffb300");
     restartBtn.position.set(0, -0.05, 0.02);

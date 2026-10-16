@@ -56,12 +56,12 @@ export class LocomotionManager {
       locomotionMode: 'SMOOTH JOYSTICK ONLY'
     };
 
-    // Outer Hall Boundaries (48m x 28m)
+    // Outer Hall Boundaries (48m x 28m) + Grand Entrance Zone
     this.hallBounds = {
       minX: -12.5,
       maxX: 12.5,
       minZ: -23.0,
-      maxZ: 22.0
+      maxZ: 29.5
     };
 
     // Major Booth Obstacle Boxes [minX, maxX, minZ, maxZ]
@@ -498,6 +498,9 @@ export class LocomotionManager {
   teleportTo(x, z) {
     if (this.userGroup) {
       this.userGroup.position.set(x, 0, z);
+    }
+    if (this.camera && (!this.renderer || !this.renderer.xr || !this.renderer.xr.isPresenting)) {
+      this.camera.position.set(x, 1.70, z);
     }
   }
 }
